@@ -18,8 +18,6 @@ append = 1
 counter1 = 1
 counter2 = 1
 counter3 = 1
-#Helps determine spacing between woven sections
-#weave = radius + 0.035
 
 
 """
