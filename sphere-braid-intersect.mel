@@ -1,24 +1,32 @@
-//Intersect braid with sphere
+/*
+    Intersect braid with sphere
+    
+    Michelle Lee
+    5-26-14
+*/
 
-//Sphere center
+//Create sphere
 float $cx = 0;
-float $cy = 1.5;
+float $cy = 2.575;
 float $cz = 0;
-float $radius = 0.2;
+float $radius = 1;
+sphere -p $cx $cy $cz -ax 0 1 0 -r $radius;
 
 //Select all curves
+SelectAllNURBSCurves;
 string $strands[] = `ls -selection`;
 //For each curve,
 for ($j = 0; $j < size($strands); $j++){
     select $strands[$j];
     //Parameterize curve with 150 segments
     rebuildCurve -ch 1 -rpo 1 -rt 0 -end 1 -kr 0 -kcp 0 -kep 1 -kt 1 -s 150 -d 1 -tol 0.01 $strands[$j];
-    //Check for line-sphere intersection
-    //These will be used to hold the intersection point
+
+    //These values will be used to hold the intersection point
     float $px = 0;
     float $py = 0;
     float $pz = 0;
-
+    
+    //Check for line-sphere intersection
     for ($i = 0; $i < 151; $i++){
     //Line origin
     $s = $strands[$j]+".cv["+$i+"]";
@@ -37,11 +45,6 @@ for ($j = 0; $j < size($strands); $j++){
     float $B = 2.0*($dx*($ex-$cx)+$dy*($ey-$cy)+$dz*($ez-$cz));
     float $C = ($ex-$cx)*($ex-$cx)+($ey-$cy)*($ey-$cy)+($ez-$cz)*($ez-$cz) - $radius*$radius;
 
-//this test is useless because all curves will be starting inside the sphere
-//float $determinant = $B*$B-4.0*$A*$C;
-//if ($determinant < 0)
-//    print "NOPE";
-
     float $t1num = -$B + sqrt(pow($B,2)-4.0*$A*$C);
     float $t2num = -$B - sqrt(pow($B,2)-4.0*$A*$C);
     float $denom = 1.0/(2.0*$A);
@@ -52,11 +55,12 @@ for ($j = 0; $j < size($strands); $j++){
     $py = $ey + ($dy*$t1);
     $pz = $ez + ($dz*$t1);
 
-    //If intersection point is within the line segment, we're done
+    //If intersection point is within the line segment, we're done 
     if (sqrt(pow(($px-$ex),2)+pow(($py-$ey),2)+pow(($pz-$ez),2)) <= sqrt($dx*$dx+$dy*$dy+$dz*$dz))
         break;  
     }
-
+    
+    //Remove part of curve that lies within the sphere
     select $strands[$j];
     closestPointOn (1, 1);
     select cpConstraintIn;
@@ -70,3 +74,40 @@ for ($j = 0; $j < size($strands); $j++){
     delete cpConstraintIn;
     delete cpConstraintPos;
 }
+
+//Re-group strands and re-color
+parent "leftStrand*" leftSection;
+parent "middleStrand*" middleSection;
+parent "rightStrand*" rightSection;
+
+select -r "leftStrand*";
+string $leftStrands[] = `ls -selection`;
+string $strand;
+for ($strand in $leftStrands){
+    $u = $strand+".overrideEnabled";
+    setAttr $u 1;
+    $u = $strand+".overrideColor";
+    setAttr $u 4;
+}
+    
+select -r "middleStrand*";
+string $middleStrands[] = `ls -selection`;
+string $strand;
+for ($strand in $middleStrands){
+    $u = $strand+".overrideEnabled";
+    setAttr $u 1;
+    $u = $strand+".overrideColor";
+    setAttr $u 5;
+}
+
+select -r "rightStrand*";
+string $rightStrands[] = `ls -selection`;
+string $strand;
+for ($strand in $rightStrands){
+    $u = $strand+".overrideEnabled";
+    setAttr $u 1;
+    $u = $strand+".overrideColor";
+    setAttr $u 7;
+}
+
+select -cl;
